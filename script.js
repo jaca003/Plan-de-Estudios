@@ -1,60 +1,101 @@
-const plan = {
-  "CBC": ["Química", "Int. Con. Sociedad y Estado", "Int. Pensamiento Científico", "Matemática", "Física e Int. Biofísica", "Biología e Int. Biología Celular"],
-  "Primer Año": ["Anatomía", "Histología - Biología Celular - Embriología - Genética", "Salud Mental", "Bioética I", "Medicina Familiar"],
-  "Segundo Año": ["Química Biológica", "Fisiología y Biofísica"],
-  "Tercer Año": ["Microbiología y Parasitología I", "Inmunología Humana", "Microbiología y Parasitología II", "Patología I", "Farmacología I"],
-  "Ciclo Clínico": ["Medicina A", "Patología II", "Salud Pública I", "Farmacología II", "Salud Pública II", "Medicina Legal y Deontología Médica", "Bioética II", "Toxicología"],
-  "Clínicas": ["Medicina B", "Nutrición", "Diagnóstico por Imágenes", "Dermatología", "Infectología", "Neumonología", "Neurología", "Psiquiatría"],
-  "Quirúrgicas": ["Pediatría", "Obstetricia", "Ginecología", "Cirugía general", "Urología", "Ortopedia - Traumatología", "Oftalmología", "Otorrinolaringología", "Neurocirugía"],
-  "Internado": ["Clínica Médica", "Cirugía", "Tocoginecología", "Pediatría", "Salud Mental", "APS", "Módulo Específico / Curso de Residencia"]
-};
+const materias = [
+  { id: 'm1', nombre: 'Anatomía', correlativas: [] },
+  { id: 'm2', nombre: 'Fisiología', correlativas: ['m1'] },
+  { id: 'm3', nombre: 'Bioquímica', correlativas: ['m1'] },
+  { id: 'm4', nombre: 'Microbiología', correlativas: ['m2', 'm3'] },
+  { id: 'm5', nombre: 'Farmacología', correlativas: ['m4'] },
+  { id: 'm6', nombre: 'Patología', correlativas: ['m4'] },
+];
 
-function crearMalla() {
-  const container = document.getElementById("malla");
-  for (const [ciclo, materias] of Object.entries(plan)) {
-    const col = document.createElement("div");
-    col.className = "columna";
-    const h = document.createElement("h3");
-    h.textContent = ciclo;
-    col.appendChild(h);
-    materias.forEach(m => {
-      const div = document.createElement("div");
-      div.className = "materia";
-      div.textContent = m;
-      div.dataset.materia = m;
-      div.addEventListener("click", () => cambiarEstado(div));
-      col.appendChild(div);
-    });
-    container.appendChild(col);
+const estados = ['pendiente', 'cursando', 'regularizado', 'aprobado'];
+
+const mallaDiv = document.getElementById('malla');
+
+// Cargar estados guardados o inicializar
+let estadoMaterias = JSON.parse(localStorage.getItem('estadoMaterias')) || {};
+
+// Función para crear el div de cada materia
+function crearMateria(materia) {
+  const div = document.createElement('div');
+  div.classList.add('materia');
+
+  // Estado actual
+  let estado = estadoMaterias[materia.id] || 'pendiente';
+
+  // Actualizar estilo según estado
+  actualizarEstilo(div, estado);
+
+  div.textContent = materia.nombre;
+
+  // Habilitar solo si correlativas aprobadas
+  const desbloqueada = materia.correlativas.every(cor => estadoMaterias[cor] === 'aprobado');
+  if (!desbloqueada && estado !== 'pendiente') {
+    // Permitir estados solo si desbloqueada
+  } else if (!desbloqueada && estado === 'pendiente') {
+    div.style.opacity = '0.5';
+    div.style.cursor = 'not-allowed';
   }
-  restaurarEstado();
-}
 
-function cambiarEstado(el) {
-  const estados = ["", "cursando", "regular", "aprobada"];
-  let actual = estados.findIndex(e => el.classList.contains(e));
-  el.classList.remove(estados[actual]);
-  actual = (actual + 1) % estados.length;
-  if (estados[actual]) el.classList.add(estados[actual]);
-  guardarEstado();
-}
+  // Al hacer click cambiar estado
+  div.addEventListener('click', () => {
+    if (!desbloqueada && estado === 'pendiente') {
+      alert('Debes aprobar las materias correlativas primero.');
+      return;
+    }
+    // Cambiar al siguiente estado
+    let idx = estados.indexOf(estado);
+    idx = (idx + 1) % estados.length;
+    estado = estados[idx];
+    estadoMaterias[materia.id] = estado === 'pendiente' ? undefined : estado;
+    if (estado === 'pendiente') delete estadoMaterias[materia.id];
+    localStorage.setItem('estadoMaterias', JSON.stringify(estadoMaterias));
+    actualizarEstilo(div, estado);
 
-function guardarEstado() {
-  const materias = document.querySelectorAll(".materia");
-  const estado = {};
-  materias.forEach(el => {
-    if (el.classList.length > 1)
-      estado[el.dataset.materia] = el.classList[1];
+    // Actualizar toda la malla para desbloquear nuevas materias
+    actualizarMalla();
   });
-  localStorage.setItem("estadoMalla", JSON.stringify(estado));
+
+  div.dataset.id = materia.id;
+
+  return div;
 }
 
-function restaurarEstado() {
-  const estado = JSON.parse(localStorage.getItem("estadoMalla") || "{}");
-  for (const [materia, clase] of Object.entries(estado)) {
-    const el = [...document.querySelectorAll(".materia")].find(e => e.dataset.materia === materia);
-    if (el) el.classList.add(clase);
+// Cambiar clases según estado
+function actualizarEstilo(div, estado) {
+  div.classList.remove('aprobado', 'cursando', 'regularizado');
+  div.style.opacity = '1';
+  div.style.cursor = 'pointer';
+
+  switch (estado) {
+    case 'aprobado':
+      div.classList.add('aprobado');
+      break;
+    case 'cursando':
+      div.classList.add('cursando');
+      break;
+    case 'regularizado':
+      div.classList.add('regularizado');
+      break;
+    case 'pendiente':
+      // nada, estilo base
+      break;
   }
 }
 
-window.onload = crearMalla;
+// Renderizar malla entera
+function actualizarMalla() {
+  mallaDiv.innerHTML = '';
+  materias.forEach(materia => {
+    const div = crearMateria(materia);
+    // Revisar desbloqueo para materia
+    const desbloqueada = materia.correlativas.every(cor => estadoMaterias[cor] === 'aprobado');
+    if (!desbloqueada && !(estadoMaterias[materia.id] && estadoMaterias[materia.id] !== 'pendiente')) {
+      div.style.opacity = '0.5';
+      div.style.cursor = 'not-allowed';
+    }
+    mallaDiv.appendChild(div);
+  });
+}
+
+// Inicializar la malla
+actualizarMalla();
