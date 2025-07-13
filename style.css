@@ -1,54 +1,54 @@
 body {
-  font-family: 'Segoe UI', sans-serif;
-  background-color: #fefefe;
-  margin: 0;
-  padding: 20px;
+  font-family: Arial, sans-serif;
+  background: #f9f9fb;
+  margin: 20px;
   color: #333;
 }
 
 .titulo {
   text-align: center;
-  color: #9B59B6;
+  color: #7b6f9e; /* lila suave */
 }
 
 #malla {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 20px;
-}
-
-.columna {
-  background-color: #f9f1ff;
-  padding: 10px;
-  border-radius: 10px;
-  width: 250px;
-}
-
-.columna h3 {
-  text-align: center;
-  color: #7D3C98;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 15px;
+  max-width: 900px;
+  margin: 0 auto;
 }
 
 .materia {
-  background-color: #D6EAF8;
   padding: 10px;
-  margin: 6px 0;
-  border-radius: 6px;
+  border-radius: 8px;
+  text-align: center;
   cursor: pointer;
-  transition: 0.3s;
+  user-select: none;
+  font-weight: 600;
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
 }
 
-.materia.aprobada {
+/* Estados de materias */
+.aprobado {
+  background-color: #c8a2c8; /* lila pastel */
+  color: white;
   text-decoration: line-through;
-  background-color: #D5DBDB;
-  opacity: 0.6;
+  border-color: #805d80;
 }
 
-.materia.cursando {
-  background-color: #FADBD8;
+.cursando {
+  background-color: #f7c6c7; /* rosa pastel */
+  color: #4a1c1d;
+  border-color: #d17d7f;
 }
 
-.materia.regular {
-  background-color: #E8DAEF;
+.regularizado {
+  background-color: #a2c8d0; /* azul pastel */
+  color: #1b3a44;
+  border-color: #53768a;
+}
+
+.materia:hover {
+  filter: brightness(90%);
 }
